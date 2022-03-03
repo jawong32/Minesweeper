@@ -21,10 +21,12 @@ void setup () {
 
 public void setMines() {
   for (int i = 0; i < NUM_ROWS * NUM_COLS / 5; i++) {
-    int row = (int) (Math.random() * NUM_ROWS);
-    int col = (int) (Math.random() * NUM_COLS);
-    if (!mines.contains(buttons[row][col]))
-      mines.add(buttons[row][col]);
+    int row, col;
+    do {
+      row = (int) (Math.random() * NUM_ROWS);
+      col = (int) (Math.random() * NUM_COLS);
+    } while (mines.contains(buttons[row][col]));
+    mines.add(buttons[row][col]);
   }
 }
 
@@ -86,17 +88,50 @@ public class MSButton {
     Interactive.add(this);
   }
 
+  public void safeClick() {
+    firstClick = false;
+    for (int i = myRow - 1; i < myRow + 2; i++)
+      for (int j = myCol - 1; j < myCol + 2; j++)
+        if (isValid(i, j)) {
+          MSButton button = buttons[i][j];
+          if (mines.contains(button)) {
+            mines.remove(button);
+            int row, col;
+            do {
+              row = (int) (Math.random() * NUM_ROWS);
+              col = (int) (Math.random() * NUM_COLS);
+            } while (mines.contains(buttons[row][col]));
+            mines.add(buttons[row][col]);
+          }
+        }
+    surroundClick();
+  }
+
+  public void surroundClick() {
+    for (int i = myRow - 1; i < myRow + 2; i++)
+      for (int j = myCol - 1; j < myCol + 2; j++)
+        if (isValid(i, j))
+          buttons[i][j].mousePressed();
+  }
+
+  public void flag() {
+    flagged = !flagged;
+    if (!flagged)
+      clicked = false;
+  }
+
   // called by manager
   public void mousePressed() {
     if (clicked && !flagged) return;
     clicked = true;
+
     if (mouseButton == RIGHT) {
-      flagged = !flagged;
-      if (!flagged)
-        clicked = false;
+      flag();
     } else if (flagged) 
       return;
-    else if (mines.contains(this)) {
+    else if (firstClick) {
+      safeClick();
+    } else if (mines.contains(this)) {
       if (firstClick) {
         mines.remove(this);
         int i = 0;
@@ -117,11 +152,7 @@ public class MSButton {
     } else if (countMines(myRow, myCol) > 0) 
       myLabel = Integer.toString(countMines(myRow, myCol));
     else
-      for (int i = myRow - 1; i < myRow + 2; i++)
-        for (int j = myCol - 1; j < myCol + 2; j++)
-          if (isValid(i, j))
-            buttons[i][j].mousePressed();
-    firstClick = false;
+      surroundClick();
   }
 
   public void draw() {    
