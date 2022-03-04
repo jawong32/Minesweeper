@@ -73,7 +73,7 @@ public int countMines(int row, int col) {
 public class MSButton {
   private int myRow, myCol;
   private float x, y, width, height;
-  private boolean clicked, flagged;
+  private boolean clicked, flagged, hovered;
   private String myLabel;
 
   public MSButton ( int row, int col ) {
@@ -85,6 +85,7 @@ public class MSButton {
     y = myRow * height;
     myLabel = "";
     flagged = clicked = false;
+    hovered = false;
     Interactive.add(this);
   }
 
@@ -97,10 +98,13 @@ public class MSButton {
           if (mines.contains(button)) {
             mines.remove(button);
             int row, col;
+            boolean okRow, okCol;
             do {
               row = (int) (Math.random() * NUM_ROWS);
               col = (int) (Math.random() * NUM_COLS);
-            } while (mines.contains(buttons[row][col]));
+              okRow = myRow - 1 > row || row > myRow + 2;
+              okCol = col - 1 > col || col > myCol + 2;
+            } while (mines.contains(buttons[row][col]) && okRow && okCol);
             mines.add(buttons[row][col]);
           }
         }
@@ -120,7 +124,6 @@ public class MSButton {
       clicked = false;
   }
 
-  // called by manager
   public void mousePressed() {
     if (clicked && !flagged) return;
     clicked = true;
@@ -162,8 +165,10 @@ public class MSButton {
       fill(255, 0, 0);
     else if (clicked)
       fill(200);
-    else 
-    fill(100);
+    else if (hovered)
+      fill(50);
+    else
+      fill(100);
 
     rect(x, y, width, height);
     fill(0);
