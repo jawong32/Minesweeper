@@ -1,7 +1,7 @@
 import de.bezier.guido.*;
 
-private static final int NUM_ROWS = 5;
-private static final int NUM_COLS = 5;
+private static final int NUM_ROWS = 20;
+private static final int NUM_COLS = 20;
 
 private MSButton[][] buttons = new MSButton[NUM_ROWS][NUM_COLS]; 
 private ArrayList <MSButton> mines = new ArrayList<MSButton>();
@@ -76,7 +76,7 @@ public int countMines(int row, int col) {
 public class MSButton {
   private int myRow, myCol;
   private float x, y, width, height;
-  private boolean clicked, flagged, hovered;
+  private boolean clicked, flagged;
   private String myLabel;
 
   public MSButton ( int row, int col ) {
@@ -88,7 +88,6 @@ public class MSButton {
     y = myRow * height;
     myLabel = "";
     flagged = clicked = false;
-    hovered = false;
     Interactive.add(this);
   }
 
@@ -101,14 +100,14 @@ public class MSButton {
           MSButton button = buttons[i][j];
           if (mines.contains(button)) {
             mines.remove(button);
-            int row, col;
+            int row, col, z = 0;
             boolean okRow, okCol;
             do {
               row = (int)(Math.random() * NUM_ROWS);
               col = (int)(Math.random() * NUM_COLS);
-              okRow = myRow - 2 > row || row > myRow + 2;
-              okCol = myCol - 2 > col || col > myCol + 2;
-            } while (!mines.contains(buttons[row][col]) && !okRow && !okCol && !isValid(row, col));
+              okRow = myRow - 1 > row || row > myRow + 1;
+              okCol = myCol - 1 > col || col > myCol + 1;
+            } while (!isValid(row, col) || mines.contains(buttons[row][col]) || !okRow || !okCol);
             mines.add(buttons[row][col]);
           }
         }
@@ -150,15 +149,16 @@ public class MSButton {
   public void draw() {    
     if (clicked)
       noStroke();
+    else 
+      stroke(0, 150, 0);
 
-    if (mines.contains(this) && !flagged) 
+    if (clicked && mines.contains(this) && !flagged) 
       fill(255, 0, 0);
     else if (clicked && !flagged)
       fill(210, 180, 140);
-    else if (hovered)
-      fill(50);
+    else if (mouseX < x + width && mouseX > x && mouseY < y + height && mouseY > y)
+      fill(50, 230, 50);
     else {
-      stroke(0, 150, 0);
       fill(50, 205, 50);
     }
 
@@ -170,7 +170,33 @@ public class MSButton {
       rect(x + width / 5, y + height / 10, width / 10, height * 0.8);
       rect(x + width / 5, y + height / 10, width / 1.5, height / 2.3);
     }
-    text(myLabel, x + width / 2, y + height / 2);
+    switch(myLabel) {
+    case "8":
+      fill(0, 0, 180);
+      break;
+    case "2":
+      fill(0, 180, 0);
+      break;
+    case "3":
+      fill(180, 0, 0);
+      break;
+    case "4":
+      fill(180, 0, 180);
+      break;
+    case "5":
+      fill(255, 80, 80);
+      break;
+    case "6":
+      fill(0, 180, 180);
+      break;
+    case "7":
+      fill(0);
+      break;
+     case "1":
+       fill(70, 180, 180);
+    }
+    textSize(30);
+    text(myLabel, x + width / 2, y + height / 2.5);
   }
 
   public void setLabel(String newLabel) {
