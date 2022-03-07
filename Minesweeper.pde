@@ -1,7 +1,7 @@
 import de.bezier.guido.*;
 
-private static final int NUM_ROWS = 20;
-private static final int NUM_COLS = 20;
+private static final int NUM_ROWS = 5;
+private static final int NUM_COLS = 5;
 
 private MSButton[][] buttons = new MSButton[NUM_ROWS][NUM_COLS]; 
 private ArrayList <MSButton> mines = new ArrayList<MSButton>();
@@ -49,6 +49,9 @@ public boolean isWon() {
 }
 
 public void displayLosingMessage() {
+  buttons[2][1].setLabel("B");
+  buttons[2][2].setLabel("O");
+  buttons[2][3].setLabel("O");
 }
 
 public void displayWinningMessage() {
@@ -91,8 +94,9 @@ public class MSButton {
 
   public void safeClick() {
     firstClick = false;
+    clicked = false;
     for (int i = myRow - 1; i < myRow + 2; i++)
-      for (int j = myCol - 1; j < myCol + 2; j++)
+      for (int j = myCol - 1; j < myCol + 2; j++) {
         if (isValid(i, j)) {
           MSButton button = buttons[i][j];
           if (mines.contains(button)) {
@@ -100,15 +104,16 @@ public class MSButton {
             int row, col;
             boolean okRow, okCol;
             do {
-              row = (int) (Math.random() * NUM_ROWS);
-              col = (int) (Math.random() * NUM_COLS);
-              okRow = myRow - 1 > row || row > myRow + 2;
-              okCol = col - 1 > col || col > myCol + 2;
-            } while (mines.contains(buttons[row][col]) && okRow && okCol);
+              row = (int)(Math.random() * NUM_ROWS);
+              col = (int)(Math.random() * NUM_COLS);
+              okRow = myRow - 2 > row || row > myRow + 2;
+              okCol = myCol - 2 > col || col > myCol + 2;
+            } while (!mines.contains(buttons[row][col]) && !okRow && !okCol && !isValid(row, col));
             mines.add(buttons[row][col]);
           }
         }
-    surroundClick();
+      }
+    mousePressed();
   }
 
   public void surroundClick() {
@@ -135,23 +140,7 @@ public class MSButton {
     else if (firstClick) {
       safeClick();
     } else if (mines.contains(this)) {
-      if (firstClick) {
-        mines.remove(this);
-        int i = 0;
-        while (firstClick) {
-          for (int j = 0; j < NUM_COLS; j++)
-            if (!mines.contains(buttons[i][j])) {
-              mines.add(buttons[i][j]);
-              firstClick = false;
-              clicked = false;
-              mousePressed();
-              break;
-            }
-          i++;
-        }
-      } else {
-        displayLosingMessage();
-      }
+      displayLosingMessage();
     } else if (countMines(myRow, myCol) > 0) 
       myLabel = Integer.toString(countMines(myRow, myCol));
     else
@@ -159,19 +148,28 @@ public class MSButton {
   }
 
   public void draw() {    
-    if (flagged)
-      fill(0);
-    else if (clicked && mines.contains(this)) 
+    if (clicked)
+      noStroke();
+
+    if (mines.contains(this) && !flagged) 
       fill(255, 0, 0);
-    else if (clicked)
-      fill(200);
+    else if (clicked && !flagged)
+      fill(210, 180, 140);
     else if (hovered)
       fill(50);
-    else
-      fill(100);
+    else {
+      stroke(0, 150, 0);
+      fill(50, 205, 50);
+    }
 
     rect(x, y, width, height);
     fill(0);
+    if (flagged) {
+      stroke(255, 0, 0);
+      fill(255, 0, 0);
+      rect(x + width / 5, y + height / 10, width / 10, height * 0.8);
+      rect(x + width / 5, y + height / 10, width / 1.5, height / 2.3);
+    }
     text(myLabel, x + width / 2, y + height / 2);
   }
 
