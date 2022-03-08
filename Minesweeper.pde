@@ -5,7 +5,8 @@ private static final int NUM_COLS = 20;
 
 private MSButton[][] buttons = new MSButton[NUM_ROWS][NUM_COLS]; 
 private ArrayList <MSButton> mines = new ArrayList<MSButton>();
-private boolean firstClick = true;
+private Message loseMessage, winMessage;
+private boolean gameOver = false, firstClick = true;
 
 void setup () {
   size(800, 800);
@@ -32,8 +33,9 @@ public void setMines() {
 
 public void draw () {
   background(0);
-  if (isWon() == true)
+  if (isWon() == true) {
     displayWinningMessage();
+  }
 }
 
 public boolean isWon() {
@@ -49,15 +51,17 @@ public boolean isWon() {
 }
 
 public void displayLosingMessage() {
-  buttons[2][1].setLabel("B");
-  buttons[2][2].setLabel("O");
-  buttons[2][3].setLabel("O");
+  if (gameOver) return;
+  loseMessage = new Message("GAME OVER");
+  for (MSButton button : mines)
+    button.mousePressed();
+  gameOver = true;
 }
 
 public void displayWinningMessage() {
-  buttons[2][1].setLabel("W");
-  buttons[2][2].setLabel("I");
-  buttons[2][3].setLabel("N");
+  if (gameOver) return;
+  winMessage = new Message("YOU WIN");
+  gameOver = true;
 }
 
 public boolean isValid(int r, int c) {
@@ -73,11 +77,32 @@ public int countMines(int row, int col) {
   return numMines;
 }
 
+// This entire class is a mess 
+public class Message {
+  private String label;
+
+  public Message(String str) {
+    label = str;
+    Interactive.add(this);
+  }
+  
+  public boolean isInside(float mx, float my) {
+    return true;
+  }
+
+  public void draw() {
+    textSize(100);
+    fill(100, 0, 0);
+    text(label, 0, 0, width, height - 200);
+  }
+}
+
 public class MSButton {
   private int myRow, myCol;
   private float x, y, width, height;
   private boolean clicked, flagged;
   private String myLabel;
+  private color mineColor;
 
   public MSButton ( int row, int col ) {
     width = 800 / NUM_COLS;
@@ -88,6 +113,13 @@ public class MSButton {
     y = myRow * height;
     myLabel = "";
     flagged = clicked = false;
+    mineColor = new color[] {
+      #db3236, 
+      #b648f2, 
+      #48e6f1, 
+      #4885ed, 
+      #F4C20D, 
+      #ED44B5}[(int) (Math.random() * 6)];
     Interactive.add(this);
   }
 
@@ -100,7 +132,7 @@ public class MSButton {
           MSButton button = buttons[i][j];
           if (mines.contains(button)) {
             mines.remove(button);
-            int row, col, z = 0;
+            int row, col;
             boolean okRow, okCol;
             do {
               row = (int)(Math.random() * NUM_ROWS);
@@ -141,20 +173,18 @@ public class MSButton {
     } else if (mines.contains(this)) {
       displayLosingMessage();
     } else if (countMines(myRow, myCol) > 0) 
-      myLabel = Integer.toString(countMines(myRow, myCol));
+      myLabel = "" + countMines(myRow, myCol);
     else
       surroundClick();
   }
 
-  public void draw() {    
+  public void draw() {   
     if (clicked)
       noStroke();
     else 
-      stroke(0, 150, 0);
+    stroke(0, 150, 0);
 
-    if (clicked && mines.contains(this) && !flagged) 
-      fill(255, 0, 0);
-    else if (clicked && !flagged)
+    if (clicked && !flagged)
       fill(210, 180, 140);
     else if (mouseX < x + width && mouseX > x && mouseY < y + height && mouseY > y)
       fill(50, 230, 50);
@@ -163,6 +193,10 @@ public class MSButton {
     }
 
     rect(x, y, width, height);
+    if (loseMessage != null && mines.contains(this)) {
+      fill(mineColor);
+      ellipse(x + width / 2, y + width / 2, width / 2, height / 2);
+    }
     fill(0);
     if (flagged) {
       stroke(255, 0, 0);
@@ -171,7 +205,7 @@ public class MSButton {
       rect(x + width / 5, y + height / 10, width / 1.5, height / 2.3);
     }
     switch(myLabel) {
-    case "8":
+    case "1":
       fill(0, 0, 180);
       break;
     case "2":
@@ -192,8 +226,8 @@ public class MSButton {
     case "7":
       fill(0);
       break;
-     case "1":
-       fill(70, 180, 180);
+    default:
+      fill(180, 180, 0);
     }
     textSize(30);
     text(myLabel, x + width / 2, y + height / 2.5);
